@@ -4,7 +4,7 @@
     "description": "Simple Crypt/Decrypt utility",
     "keywords": ["crypt"],
     "homepage": "http://joffreydemetz.com/git/crypt/",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "license": "MIT",
     
     "authors": [
@@ -22,10 +22,7 @@
     
     "autoload": {
         "psr-4": {
-            "JDZ\\Crypt\\": ""
-        },
-        "exclude-from-classmap": [
-            "/Tests/"
-        ]
+            "JDZ\\Crypt\\": "src"
+        }
     }
 }

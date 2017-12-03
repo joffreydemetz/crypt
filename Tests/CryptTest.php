@@ -8,9 +8,8 @@ namespace JDZ\Crypt;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Test
- * 
- * @author Joffrey Demetz <joffrey.demetz@gmail.com>
+ * @package Test
+ * @author  Joffrey Demetz <joffrey.demetz@gmail.com>
  */
 class CryptTest extends TestCase
 {
