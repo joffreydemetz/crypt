@@ -3,22 +3,18 @@
 	"type": "library",
     "description": "Simple Crypt/Decrypt utility",
     "keywords": ["crypt"],
-    "homepage": "http://joffreydemetz.com/git/crypt/",
-    "version": "1.2.0",
+    "homepage": "https://github.com/joffreydemetz/crypt/",
+    "version": "1.2.1",
     "license": "MIT",
     
     "authors": [
         {
         "name": "Joffrey Demetz",
         "email": "joffrey.demetz@gmail.com",
-        "homepage": "http://joffreydemetz.com",
+        "homepage": "https://joffreydemetz.com",
         "role": "Lead"
         }
     ],
-    
-    "require": {
-        "php": ">=5.6"
-    },
     
     "autoload": {
         "psr-4": {
