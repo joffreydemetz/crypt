@@ -1,7 +1,7 @@
 <?php
 /**
  * Joffrey Demetz <joffrey.demetz@gmail.com>
- * <http://joffreydemetz.com>
+ * <https://joffrey.demetz.com>
  */
 namespace JDZ\Crypt;
 
