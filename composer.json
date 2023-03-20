@@ -4,7 +4,7 @@
     "description": "Simple Crypt/Decrypt utility",
     "keywords": ["crypt"],
     "homepage": "https://github.com/joffreydemetz/crypt/",
-    "version": "2.0.1",
+    "version": "2.1.0",
     "license": "MIT",
     
     "authors": [
@@ -17,7 +17,7 @@
     ],
 
     "require": {
-        "php": "^7.1.3"
+        "php": "^8"
     },
 
     "autoload": {
