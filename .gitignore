@@ -1,2 +1,6 @@
-phpdoc.dist.xml
-/doc/
+composer.lock
+/vendor/
+
+.phpunit.cache
+/coverage/
+
