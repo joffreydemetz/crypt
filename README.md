@@ -131,8 +131,6 @@ Tests are located in the `tests/` directory and follow the PSR-4 autoloading sta
 - `SimpleCipherTest.php` - Tests for the SimpleCipher implementation
 - `CryptTest.php` - Tests for the main Crypt class
 
-For more details on testing, see [TESTING.md](TESTING.md).
-
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
