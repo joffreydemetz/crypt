@@ -34,7 +34,7 @@
         }
     },
     "scripts": {
-        "test": "phpunit",
+        "test": "phpunit --colors=always --testdox",
         "test-coverage": "phpunit --coverage-html coverage"
     }
 }
