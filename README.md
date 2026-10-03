@@ -1,6 +1,11 @@
 # Crypt
 Simple crypt/decrypt utility
 
+> **Not for real secrets.** The ciphers are a repeating-key XOR, hex-encoded.
+> They obfuscate a value; they do not protect it against an attacker. Use
+> `sodium_crypto_secretbox()` or `openssl_encrypt()` for anything that must
+> stay confidential.
+
 ## Installation
 To install the package, you can use Composer:
 
@@ -9,7 +14,7 @@ composer require jdz/crypt
 ```
 
 ## Requirements
-- PHP 8.1 or higher
+- PHP 8.2 or higher
 - Composer for dependency management
 
 ## Usage
@@ -130,6 +135,12 @@ Tests are located in the `tests/` directory and follow the PSR-4 autoloading sta
 - `KeyTest.php` - Tests for the Key class
 - `SimpleCipherTest.php` - Tests for the SimpleCipher implementation
 - `CryptTest.php` - Tests for the main Crypt class
+
+## Changelog
+
+- **3.0.2** - PHPUnit 11.
+- **3.0.1** - `composer test` runs with testdox output.
+- **3.0.0** - Breaking rewrite: `CryptCipher`, `CryptKey` and the `Crypt*Interface` classes are replaced by `SimpleCipher` / `Md5Cipher` / `Sha1Cipher`, `Key`, the matching generators and `CipherInterface` / `GeneratorInterface`; tests and examples added.
 
 ## License
 
