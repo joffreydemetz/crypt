@@ -20,6 +20,10 @@ class SimpleGenerator implements GeneratorInterface
 
     public function setLength(int $length): void
     {
+        if ($length < 1) {
+            throw new \InvalidArgumentException('The key length must be at least 1.');
+        }
+
         $this->length = $length;
     }
 

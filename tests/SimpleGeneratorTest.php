@@ -72,5 +72,23 @@ class SimpleGeneratorTest extends TestCase
         $generator->generateKey();
     }
 
+    /**
+     * A length below 1 used to produce Key(''), which then hung the cipher.
+     *
+     * @return iterable<string, array{int}>
+     */
+    public static function invalidLengthProvider(): iterable
+    {
+        yield 'zero' => [0];
+        yield 'negative' => [-5];
+    }
 
+    #[DataProvider('invalidLengthProvider')]
+    public function testALengthBelowOneIsRefused(int $length): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('The key length must be at least 1.');
+
+        (new SimpleGenerator())->setLength($length);
+    }
 }

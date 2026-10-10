@@ -16,6 +16,10 @@ class SimpleCipher implements CipherInterface
   {
     $tmp = $key->private;
 
+    if ('' === $tmp) {
+      throw new \InvalidArgumentException('The key is empty.');
+    }
+
     // Split up the input into a character array 
     // and get the number of characters.
     $chars = \preg_split('//', $decrypted, -1, \PREG_SPLIT_NO_EMPTY);
@@ -40,6 +44,10 @@ class SimpleCipher implements CipherInterface
   public function decrypt(string $encrypted, Key $key): string
   {
     $tmp = $key->public;
+
+    if ('' === $tmp) {
+      throw new \InvalidArgumentException('The key is empty.');
+    }
 
     // Convert the HEX input into an array of integers 
     // and get the number of characters.

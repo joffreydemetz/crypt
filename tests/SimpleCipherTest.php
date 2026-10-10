@@ -130,5 +130,27 @@ class SimpleCipherTest extends TestCase
         $this->assertNotEquals($originalText, $decryptedWithWrongKey);
     }
 
+    /**
+     * An empty key used to hang encrypt() and decrypt(): the loop that repeats the
+     * key until it covers the input doubled an empty string forever.
+     *
+     * @return iterable<string, array{string, string, ?string, string}>
+     */
+    public static function emptyKeyProvider(): iterable
+    {
+        yield 'encrypt with an empty key' => ['encrypt', '', null, 'hello'];
+        yield 'encrypt with an empty private key' => ['encrypt', 'abc', '', 'hello'];
+        yield 'encrypt nothing with an empty key' => ['encrypt', '', null, ''];
+        yield 'decrypt with an empty key' => ['decrypt', '', null, ' B'];
+        yield 'decrypt with an empty public key' => ['decrypt', '', 'abc', ' B'];
+    }
 
+    #[DataProvider('emptyKeyProvider')]
+    public function testAnEmptyKeyIsRefused(string $method, string $public, ?string $private, string $input): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('The key is empty.');
+
+        $this->cipher->$method($input, new Key($public, $private));
+    }
 }
