@@ -7,8 +7,11 @@
 
 namespace JDZ\Crypt\Tests;
 
-use JDZ\Crypt\SimpleCipher;
 use JDZ\Crypt\Key;
+use JDZ\Crypt\Md5Cipher;
+use JDZ\Crypt\Sha1Cipher;
+use JDZ\Crypt\SimpleCipher;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 class SimpleCipherTest extends TestCase
@@ -20,83 +23,99 @@ class SimpleCipherTest extends TestCase
         $this->cipher = new SimpleCipher();
     }
 
-    public function testEncryptDecryptWithSameKey(): void
+    /**
+     * Ciphertexts produced by the current code, hardcoded so the format can never
+     * change silently (repeating-key XOR, two uppercase hex characters per byte,
+     * ' ' instead of '0' for a zero high nibble): stored ciphertext must stay
+     * decryptable.
+     *
+     * @return iterable<string, array{string, string, string}> key, plaintext, ciphertext
+     */
+    public static function knownAnswerProvider(): iterable
     {
-        $originalText = 'Hello World!';
-        $key = new Key('secret-key-123');
-
-        $encrypted = $this->cipher->encrypt($originalText, $key);
-        $decrypted = $this->cipher->decrypt($encrypted, $key);
-
-        $this->assertNotEquals($originalText, $encrypted);
-        $this->assertSame($originalText, $decrypted);
+        yield 'plaintext equal to key: zero bytes, space padding' => ['key', 'key', ' 0 0 0'];
+        yield 'ASCII sentence, key shorter than plaintext' => ['secret', 'Hello World!', '3B 0 F1E A5424 A111E 155'];
+        yield 'key repeated cyclically' => ['abc', 'abcdefghij', ' 0 0 0 5 7 5 6 A A B'];
+        yield 'key longer than plaintext: only its prefix is used' => ['longer-key', 'ab', ' D D'];
+        yield 'NUL key: identity XOR, raw hex format' => ["\x00", "\x00\x0F\x10\xFF", ' 0 F10FF'];
+        yield 'multibyte UTF-8 key and plaintext, XORed byte by byte' => ["cl\u{e9}", "\u{e9}t\u{e9}", 'A0C5B76ACA'];
+        yield 'empty plaintext' => ['k', '', ''];
     }
 
-    public function testEncryptProducesHexString(): void
+    #[DataProvider('knownAnswerProvider')]
+    public function testEncryptMatchesKnownAnswer(string $key, string $plaintext, string $ciphertext): void
     {
-        $originalText = 'Test';
-        $key = new Key('test-key');
-
-        $encrypted = $this->cipher->encrypt($originalText, $key);
-
-        // Verify the result is hexadecimal (contains only 0-9, A-F, and spaces)
-        $this->assertMatchesRegularExpression('/^[0-9A-F ]+$/', $encrypted);
+        $this->assertSame($ciphertext, $this->cipher->encrypt($plaintext, new Key($key)));
     }
 
-    public function testEncryptDecryptEmptyString(): void
+    #[DataProvider('knownAnswerProvider')]
+    public function testDecryptMatchesKnownAnswer(string $key, string $plaintext, string $ciphertext): void
     {
-        $originalText = '';
-        $key = new Key('key');
-
-        $encrypted = $this->cipher->encrypt($originalText, $key);
-        $decrypted = $this->cipher->decrypt($encrypted, $key);
-
-        $this->assertSame($originalText, $decrypted);
+        $this->assertSame($plaintext, $this->cipher->decrypt($ciphertext, new Key($key)));
     }
 
-    public function testEncryptDecryptLongText(): void
+    /**
+     * @return iterable<string, array{string, string}> key, plaintext
+     */
+    public static function roundTripProvider(): iterable
     {
-        $originalText = str_repeat('This is a longer text that repeats. ', 10);
-        $key = new Key('my-secret-key');
-
-        $encrypted = $this->cipher->encrypt($originalText, $key);
-        $decrypted = $this->cipher->decrypt($encrypted, $key);
-
-        $this->assertSame($originalText, $decrypted);
+        yield 'ASCII sentence' => ['secret-key-123', 'Hello World!'];
+        yield 'empty string' => ['key', ''];
+        yield 'long text, key much shorter' => ['my-secret-key', str_repeat('This is a longer text that repeats. ', 10)];
+        yield 'special characters' => ['special-key', "Special chars: !@#\$%^&*()_+-=[]{}|;':\",./<>?"];
+        yield 'real newlines, CRLF and tabs' => ['newline-key', "Line1\nLine2\r\nLine3\tTabbed\n"];
+        yield 'multibyte UTF-8' => ['unicode-key', "Unicode: \u{3053}\u{3093}\u{306B}\u{3061}\u{306F} \u{4E16}\u{754C} \u{1F30D} \u{e9}\u{e0}\u{e7}"];
+        yield 'every byte 0x00-0xFF' => ['binary-key', implode('', array_map('chr', range(0, 255)))];
+        yield 'binary key' => ["\x00\xFF\x80\x7F", 'ASCII text under a binary key'];
+        yield 'multibyte key' => ["cl\u{e9}-\u{fc}-\u{1F511}", 'ASCII text under a multibyte key'];
     }
 
-    public function testEncryptDecryptSpecialCharacters(): void
+    #[DataProvider('roundTripProvider')]
+    public function testDecryptRestoresWhatEncryptProduced(string $key, string $plaintext): void
     {
-        $originalText = "Special chars: !@#$%^&*()_+-=[]{}|;':\",./<>?";
-        $key = new Key('special-key');
+        $encrypted = $this->cipher->encrypt($plaintext, new Key($key));
 
-        $encrypted = $this->cipher->encrypt($originalText, $key);
-        $decrypted = $this->cipher->decrypt($encrypted, $key);
-
-        $this->assertSame($originalText, $decrypted);
+        $this->assertSame(2 * strlen($plaintext), strlen($encrypted));
+        $this->assertSame($plaintext, $this->cipher->decrypt($encrypted, new Key($key)));
     }
 
-    public function testEncryptDecryptUnicodeCharacters(): void
+    public function testEncryptUsesThePrivateKeyAndDecryptThePublicKey(): void
     {
-        $originalText = 'Unicode: こんにちは 世界 🌍';
-        $key = new Key('unicode-key');
-
-        $encrypted = $this->cipher->encrypt($originalText, $key);
-        $decrypted = $this->cipher->decrypt($encrypted, $key);
-
-        $this->assertSame($originalText, $decrypted);
+        // '3B 0 F1E A5424 A111E 155' is the known answer for key 'secret'
+        $this->assertSame('3B 0 F1E A5424 A111E 155', $this->cipher->encrypt('Hello World!', new Key('ignored-public', 'secret')));
+        $this->assertSame('Hello World!', $this->cipher->decrypt('3B 0 F1E A5424 A111E 155', new Key('secret', 'ignored-private')));
     }
 
-    public function testDifferentKeysProduceDifferentResults(): void
+    public function testDecryptAcceptsZeroAsWellAsSpaceForAZeroHighNibble(): void
     {
-        $originalText = 'Same text';
-        $key1 = new Key('key-one');
-        $key2 = new Key('key-two');
+        // the ' 0 F10FF' known answer, written as conventional zero-padded hex
+        $this->assertSame("\x00\x0F\x10\xFF", $this->cipher->decrypt('000F10FF', new Key("\x00")));
+    }
 
-        $encrypted1 = $this->cipher->encrypt($originalText, $key1);
-        $encrypted2 = $this->cipher->encrypt($originalText, $key2);
+    /**
+     * Md5Cipher and Sha1Cipher are empty subclasses: no hashing happens.
+     *
+     * @return iterable<string, array{class-string<SimpleCipher>, string, string, string}>
+     */
+    public static function hashNamedCipherKnownAnswerProvider(): iterable
+    {
+        foreach (['Md5Cipher' => Md5Cipher::class, 'Sha1Cipher' => Sha1Cipher::class] as $name => $class) {
+            foreach (self::knownAnswerProvider() as $row => $args) {
+                yield "$name, $row" => [$class, ...$args];
+            }
+        }
+    }
 
-        $this->assertNotEquals($encrypted1, $encrypted2);
+    /**
+     * @param class-string<SimpleCipher> $class
+     */
+    #[DataProvider('hashNamedCipherKnownAnswerProvider')]
+    public function testMd5AndSha1CiphersBehaveExactlyLikeSimpleCipher(string $class, string $key, string $plaintext, string $ciphertext): void
+    {
+        $cipher = new $class();
+
+        $this->assertSame($ciphertext, $cipher->encrypt($plaintext, new Key($key)));
+        $this->assertSame($plaintext, $cipher->decrypt($ciphertext, new Key($key)));
     }
 
     public function testDecryptWithWrongKeyProducesGarbage(): void
@@ -110,4 +129,6 @@ class SimpleCipherTest extends TestCase
 
         $this->assertNotEquals($originalText, $decryptedWithWrongKey);
     }
+
+
 }
