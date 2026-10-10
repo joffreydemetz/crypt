@@ -36,6 +36,6 @@
     },
     "scripts": {
         "test": "phpunit --colors=always --testdox",
-        "test-coverage": "phpunit --coverage-html coverage"
+        "test-coverage": ["@putenv XDEBUG_MODE=coverage", "phpunit --coverage-html coverage"]
     }
 }
