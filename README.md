@@ -135,9 +135,11 @@ Tests are located in the `tests/` directory and follow the PSR-4 autoloading sta
 - `KeyTest.php` - Tests for the Key class
 - `SimpleCipherTest.php` - Tests for the SimpleCipher implementation
 - `CryptTest.php` - Tests for the main Crypt class
+- `SimpleGeneratorTest.php`, `Md5GeneratorTest.php`, `Sha1GeneratorTest.php` - Tests for the key generators
 
 ## Changelog
 
+- **3.0.3** - An empty key, or a generator length below 1, throws an `InvalidArgumentException` instead of hanging `encrypt()` / `decrypt()`; known-answer tests pin the ciphertext format.
 - **3.0.2** - PHPUnit 11.
 - **3.0.1** - `composer test` runs with testdox output.
 - **3.0.0** - Breaking rewrite: `CryptCipher`, `CryptKey` and the `Crypt*Interface` classes are replaced by `SimpleCipher` / `Md5Cipher` / `Sha1Cipher`, `Key`, the matching generators and `CipherInterface` / `GeneratorInterface`; tests and examples added.
