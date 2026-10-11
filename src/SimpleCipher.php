@@ -70,78 +70,44 @@ class SimpleCipher implements CipherInterface
     return $decrypted;
   }
 
+  /**
+   * One byte of the ciphertext: two hex digits, upper or lower case, the
+   * high nibble written as a space when it is zero (what intToHex() emits).
+   *
+   * @throws \InvalidArgumentException on anything else (D23: a tampered value
+   *                                   used to decode to garbage)
+   */
   protected function hexToInt(string $hex, int $i): int
   {
     $j = $i * 2;
-    $c = substr($hex, $j, 1);
-    $c1 = substr($hex, $j + 1, 1);
+    $high = $hex[$j];
+    $low = $hex[$j + 1];
 
-    $k = 0;
-
-    switch ($c) {
-      case 'A':
-        $k += 160;
-        break;
-      case 'B':
-        $k += 176;
-        break;
-      case 'C':
-        $k += 192;
-        break;
-      case 'D':
-        $k += 208;
-        break;
-      case 'E':
-        $k += 224;
-        break;
-      case 'F':
-        $k += 240;
-        break;
-      case ' ':
-        $k += 0;
-        break;
-      default:
-        (int) $k = $k + (16 * (int) $c);
-        break;
+    if (' ' === $high) {
+      $high = '0';
     }
 
-    switch ($c1) {
-      case 'A':
-        $k += 10;
-        break;
-      case 'B':
-        $k += 11;
-        break;
-      case 'C':
-        $k += 12;
-        break;
-      case 'D':
-        $k += 13;
-        break;
-      case 'E':
-        $k += 14;
-        break;
-      case 'F':
-        $k += 15;
-        break;
-      case ' ':
-        $k += 0;
-        break;
-      default:
-        $k += (int) $c1;
-        break;
+    if (1 !== \preg_match('/^[0-9A-Fa-f]{2}$/', $high . $low)) {
+      throw new \InvalidArgumentException('The input is not a valid ciphertext.');
     }
 
-    return $k;
+    return (int) \hexdec($high . $low);
   }
 
+  /**
+   * @throws \InvalidArgumentException on an odd length or a non-hex character
+   */
   protected function hexToIntArray(string $hex): array
   {
+    $length = \strlen($hex);
+
+    if (0 !== $length % 2) {
+      throw new \InvalidArgumentException('The input is not a valid ciphertext.');
+    }
+
     $array = [];
 
-    $j = \strlen($hex) / 2;
-
-    for ($i = 0; $i < $j; $i++) {
+    for ($i = 0, $j = $length / 2; $i < $j; $i++) {
       $array[$i] = $this->hexToInt($hex, $i);
     }
 

@@ -153,4 +153,41 @@ class SimpleCipherTest extends TestCase
 
         $this->cipher->$method($input, new Key($public, $private));
     }
+
+    /**
+     * D23 (2026-10-10): the hex decoder read a lowercase digit as 0, any other
+     * character as 0, and an odd-length input gained a byte — a tampered
+     * remember-me cookie decoded to garbage instead of being refused.
+     */
+    public function testDecryptAcceptsLowercaseHex(): void
+    {
+        $this->assertSame("\x00\x0F\x10\xFF", $this->cipher->decrypt('000f10ff', new Key("\x00")));
+        $this->assertSame("\x00\x0F\x10\xFF", $this->cipher->decrypt('000F10fF', new Key("\x00")));
+    }
+
+    public function testDecryptOfAnEmptyStringIsEmpty(): void
+    {
+        $this->assertSame('', $this->cipher->decrypt('', new Key('secret')));
+    }
+
+    public static function invalidHexProvider(): iterable
+    {
+        yield 'odd length' => ['ABC'];
+        yield 'a non-hex letter' => ['0G'];
+        yield 'a space in the low nibble' => ['A '];
+        yield 'garbage inside' => ['41 4x42'];
+        yield 'a dash' => ['41-42'];
+        yield 'a tampered cookie' => ['not-a-cookie'];
+        yield 'a multibyte character' => ['41é'];
+        yield 'a newline' => ["41\n42"];
+    }
+
+    #[DataProvider('invalidHexProvider')]
+    public function testDecryptRefusesWhatIsNotItsHex(string $input): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('not a valid ciphertext');
+
+        $this->cipher->decrypt($input, new Key('secret'));
+    }
 }
