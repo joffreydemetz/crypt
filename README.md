@@ -48,10 +48,18 @@ echo $decrypted; // Output: Secret message
 The library provides three cipher implementations:
 
 1. **SimpleCipher** - Uses the passphrase directly as the encryption key
-2. **Md5Cipher** - Uses MD5 hash of the passphrase (32 characters)
-3. **Sha1Cipher** - Uses SHA1 hash of the passphrase (40 characters)
+2. **Md5Cipher** - *deprecated since 3.1.0*: an alias of `SimpleCipher`, nothing is hashed
+3. **Sha1Cipher** - *deprecated since 3.1.0*: an alias of `SimpleCipher`, nothing is hashed
 
-All ciphers use XOR-based encryption and extend from `SimpleCipher`.
+All ciphers use XOR-based encryption and extend from `SimpleCipher`. The two hash-named
+ciphers never hashed anything; they are kept so that whatever was stored with them decodes the
+same, and will go with 4.0 — use `SimpleCipher` (or hash the key yourself with a generator).
+
+`decrypt()` is strict about its input: two hex digits per byte, upper or lower case (the
+high nibble of a byte below 16 may be a space, which is what `encrypt()` writes). Anything
+else — an odd length, a non-hex character, a tampered cookie — throws an
+`\InvalidArgumentException`; it used to decode to garbage. Catch it where the ciphertext
+comes from a visitor.
 
 ### Key Generation
 
@@ -139,6 +147,7 @@ Tests are located in the `tests/` directory and follow the PSR-4 autoloading sta
 
 ## Changelog
 
+- **3.1.0** - **Security**: `decrypt()` refuses what is not its hex (odd length, non-hex characters) with an `\InvalidArgumentException` — a lowercase digit was read as 0, any other character as 0 and an odd input gained a byte, so a tampered value decoded to garbage; lowercase hex is accepted. The generators draw from `random_int()` instead of `mt_rand()`. `Md5Cipher` / `Sha1Cipher` are deprecated (aliases of `SimpleCipher`, behaviour kept).
 - **3.0.3** - An empty key, or a generator length below 1, throws an `InvalidArgumentException` instead of hanging `encrypt()` / `decrypt()`; known-answer tests pin the ciphertext format.
 - **3.0.2** - PHPUnit 11.
 - **3.0.1** - `composer test` runs with testdox output.
