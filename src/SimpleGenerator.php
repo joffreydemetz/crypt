@@ -44,7 +44,8 @@ class SimpleGenerator implements GeneratorInterface
 
         $key = '';
         for ($i = 0; $i < $this->length; $i++) {
-            $key .= $salt[\mt_rand(0, $saltLength - 1)];
+            // a CSPRNG: mt_rand() is replayable from its seed (D23)
+            $key .= $salt[\random_int(0, $saltLength - 1)];
         }
 
         return $key;

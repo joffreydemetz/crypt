@@ -91,4 +91,21 @@ class SimpleGeneratorTest extends TestCase
 
         (new SimpleGenerator())->setLength($length);
     }
+
+    /**
+     * D23: the keys came from mt_rand(), whose sequence anyone can replay from
+     * its seed. A CSPRNG does not follow mt_srand().
+     */
+    public function testTheKeyDoesNotFollowTheMtRandSeed(): void
+    {
+        $generator = new SimpleGenerator();
+        $generator->setLength(32);
+
+        \mt_srand(42);
+        $first = $generator->generateKey()->public;
+        \mt_srand(42);
+        $second = $generator->generateKey()->public;
+
+        $this->assertNotSame($first, $second);
+    }
 }
